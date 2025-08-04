@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
-const parentInfosShema =mongoose.Schema({
+const parentInfosSchema =mongoose.Schema({
     kids: Number,
     subscription: Boolean
 })
 
-const babysitterInfosShema =mongoose.Schema({
+const babysitterInfosSchema =mongoose.Schema({
     CNI: String,
     criminalRecord: String,
     age: String,
@@ -13,9 +13,9 @@ const babysitterInfosShema =mongoose.Schema({
     bio: String,
     availability: Date,
     interest: String,
-    isDocOk: Boolean,
+    isDocOk: {type :Boolean, required: true, default: false},
     situation: String,
-    jackpot: Number
+    jackpot: {type: Number, required: true, default: 0}
 })
 
 const usersSchema = mongoose.Schema({
@@ -23,9 +23,9 @@ const usersSchema = mongoose.Schema({
     email: String,
     password: String,
     lastName: String,
-    firsName:String,
+    firstName:String,
     phone:String,
-    location: {lat: String, lon: String},
+    location: {lat: String, lon: String, adress:String},
     avatar: String,
     createdAt : Date,
     updatedAt: Date,
@@ -33,8 +33,10 @@ const usersSchema = mongoose.Schema({
     babysits: Number,
     conversations: { type: mongoose.Schema.Types.ObjectId, ref: 'conversations' },
     isValidated: Boolean,
-    parentInfos: parentInfosShema,
-    babysitterInfos: babysitterInfosShema,
+    parentInfos: parentInfosSchema,
+    babysitterInfos: babysitterInfosSchema,
+    isParent: {type: Boolean, default: false},
+    isBabysitter: {type: Boolean, default: false}
 });
 
 

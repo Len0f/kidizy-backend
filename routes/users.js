@@ -64,7 +64,91 @@ router.post('/signin', (req, res) => {
   });
 });
 
+router.put('/submit', async (req, res) => {
+  const token = req.body.token
 
+  if (!token) {
+    return res.json({ result: false, error: 'utilisateur inconnu' });
+  }
+
+  
+  req.body.updatedAt = new Date();
+
+    let existingUser = await User.findOne({ token });
+
+if (!existingUser) {
+  return res.json({ result: false, error: 'Utilisateur inconnu' });
+}
+
+const isFirstUpdate =
+  !existingUser.lastName || !existingUser.firsName;
+
+if (isFirstUpdate) {
+  if (!checkBody(req.body, ['firstName', 'lastName']))
+   {
+    return res.json({
+      result: false,
+      error: 'Nom, prénom  obligatoires',
+    });
+  }
+}
+// existingUser.babysitterInfos= req.body.babysitterInfos
+// existingUser.markModified('babysitterInfos')
+// const newInfos = await existingUser.save()
+console.log('un',existingUser)
+
+    existingUser.babysitterInfos = {...existingUser.babysitterInfos,...req.body.babysitterInfos}
+
+    //existingUser.markModified('babysitterInfos')
+    const updatedUser = await User.findByIdAndUpdate(
+      existingUser._id,
+        existingUser,
+        {new: true}
+      
+    );
+
+res.json({ result: true, user: updatedUser });
+  
+  });
+
+  	
+router.delete('/', (req, res) => {
+  const token = req.body.token;
+
+  if (!token) {
+    return res.json({ result: false, error: 'Token manquant' });
+  }
+
+  User.findOneAndDelete({ token }).then(deletedUser => {
+    if (deletedUser) {
+      res.json({ result: true, message: 'Utilisateur supprimé' });
+    } else {
+      res.json({ result: false, error: 'Utilisateur introuvable ou déjà supprimé' });
+    }
+  })
+})
+
+router.get('/me/:token', (req, res) => {
+
+  User.findOne({ token: req.params.token }).then(data => {
+    if (data) {
+      res.json({ result: true, user: data });
+    } else {
+      res.json({ result: false, error: 'Utilisateur introuvable' });
+    }
+  });
+});
+
+router.get('/id/:id', (req, res) => {
+
+  User.findById({ _id: req.params.id }).then(data => {
+    if (data) {
+      res.json({ result: true, user: data });
+    } else {
+      res.json({ result: false, error: 'Utilisateur introuvable' });
+    }
+  });
+});
 
 module.exports = router 
 
