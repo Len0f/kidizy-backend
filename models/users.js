@@ -1,5 +1,22 @@
 const mongoose = require('mongoose');
 
+const parentInfosShema =mongoose.Schema({
+    kids: Number,
+    subscription: Boolean
+})
+
+const babysitterInfosShema =mongoose.Schema({
+    CNI: String,
+    criminalRecord: String,
+    age: String,
+    price: Number,
+    bio: String,
+    availability: Date,
+    interest: String,
+    isDocOk: Boolean,
+    situation: String,
+    jackpot: Number
+})
 
 const usersSchema = mongoose.Schema({
 	token: String,
@@ -20,23 +37,6 @@ const usersSchema = mongoose.Schema({
     babysitterInfos: babysitterInfosShema,
 });
 
-const parentInfosShema =mongoose.Schema({
-    kids: Number,
-    subscription: Boolean
-})
-
-const babysitterInfosShema =mongoose.Schema({
-    CNI: String,
-    criminalRecord: String,
-    age: String,
-    price: Number,
-    bio: String,
-    availability: Date,
-    interest: String,
-    isDocOk: Boolean,
-    situation: String,
-    jackpot: Number
-})
 
 const Users = mongoose.model('users', usersSchema);
 
