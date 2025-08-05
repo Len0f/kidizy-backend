@@ -8,6 +8,9 @@ const { checkBody } = require('../modules/checkBody');
 const uid2 = require('uid2');
 const bcrypt = require('bcrypt');
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
+const uniqid = require('uniqid');
 
 router.post('/signup', (req, res) => {
   if (!checkBody(req.body, ['email', 'password'])) {
@@ -116,6 +119,7 @@ if (isFirstUpdate) {
   }
 }
 
+
   if(existingUser.role=="BABYSITTER"){
     existingUser.babysitterInfos = {...existingUser.babysitterInfos,...req.body.babysitterInfos}
     const updatedUser = await User.findByIdAndUpdate(
@@ -174,6 +178,26 @@ router.get('/id/:id', (req, res) => {
       res.json({ result: false, error: 'Utilisateur introuvable' });
     }
   });
+});
+
+router.post('/upload', async (req, res) => {
+ 
+ const id = uniqid()
+ const ext = ".jpg"||".pdf"||".png"||".jpeg"||".webp"
+ const photoPath = `./tmp/${id}${ext}`;
+ const resultMove = await req.files.photoFromFront.mv(photoPath);
+
+ if (!resultMove) {
+  console.log(resultMove)
+   const resultCloudinary = await cloudinary.uploader.upload(photoPath); console.log(resultCloudinary)
+
+    fs.unlinkSync(photoPath);
+
+    res.json({ result: true, url: resultCloudinary.secure_url });     
+ } else {
+   res.json({ result: false, error: resultMove });
+ }
+ 
 });
 
 module.exports = router 

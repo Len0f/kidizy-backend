@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const parentInfosSchema =mongoose.Schema({
-    kids: Number,
+    kids: [{firstName:String, age:String}],
     subscription: Boolean
 })
 
@@ -25,7 +25,7 @@ const usersSchema = mongoose.Schema({
     lastName: String,
     firstName:String,
     phone:String,
-    location: {lat: String, lon: String, adress:String},
+    location: {lat: String, lon: String, address:String},
     avatar: String,
     createdAt : Date,
     updatedAt: Date,
