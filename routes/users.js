@@ -64,6 +64,29 @@ router.post('/signin', (req, res) => {
   });
 });
 
+router.put('/role', async (req, res) => {
+  const { token, role } = req.body;
+
+  if (!token) {
+    return res.json({ result: false, error: 'Utilisateur inconnu' });
+  }
+
+  const updatedUser = await User.findOneAndUpdate(
+    {token},
+    { role, updatedAt: new Date() }, 
+    { new: true }
+  )
+
+  if (updatedUser) {
+    res.json({ result: true, user: updatedUser });
+  } else {
+    res.json({ result: false, error: 'Utilisateur introuvable' });
+  }
+});
+
+
+
+
 router.put('/submit', async (req, res) => {
   const token = req.body.token
 
@@ -92,23 +115,26 @@ if (isFirstUpdate) {
     });
   }
 }
-// existingUser.babysitterInfos= req.body.babysitterInfos
-// existingUser.markModified('babysitterInfos')
-// const newInfos = await existingUser.save()
-console.log('un',existingUser)
 
+  if(existingUser.role=="BABYSITTER"){
     existingUser.babysitterInfos = {...existingUser.babysitterInfos,...req.body.babysitterInfos}
-
-    //existingUser.markModified('babysitterInfos')
     const updatedUser = await User.findByIdAndUpdate(
       existingUser._id,
         existingUser,
         {new: true}
-      
     );
 
 res.json({ result: true, user: updatedUser });
-  
+  }else
+  {existingUser.parentInfos = {...existingUser.parentInfos,...req.body.parentInfos}   
+    const updatedUser = await User.findByIdAndUpdate(
+      existingUser._id,
+        existingUser,
+        {new: true}
+    
+    );
+console.log("role2",existingUser.role)
+res.json({ result: true, user: updatedUser });}
   });
 
   	

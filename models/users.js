@@ -35,8 +35,7 @@ const usersSchema = mongoose.Schema({
     isValidated: Boolean,
     parentInfos: parentInfosSchema,
     babysitterInfos: babysitterInfosSchema,
-    isParent: {type: Boolean, default: false},
-    isBabysitter: {type: Boolean, default: false}
+    role: {type:String, enum: ['PARENT','BABYSITTER','PENDING'], required: true,default: 'PENDING' }
 });
 
 
