@@ -5,13 +5,18 @@ const parentInfosSchema =mongoose.Schema({
     subscription: Boolean
 })
 
+
 const babysitterInfosSchema =mongoose.Schema({
     CNI: String,
     criminalRecord: String,
     age: String,
     price: Number,
     bio: String,
-    availability: Date,
+    availability: [{
+        day:String,
+        startHour: String,
+        endHour: String
+    }],
     interest: String,
     isDocOk: {type :Boolean, required: true, default: false},
     situation: String,

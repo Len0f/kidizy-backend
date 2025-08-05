@@ -121,7 +121,9 @@ if (isFirstUpdate) {
 
 
   if(existingUser.role=="BABYSITTER"){
-    existingUser.babysitterInfos = {...existingUser.babysitterInfos,...req.body.babysitterInfos}
+    //existingUser.babysitterInfos = {...existingUser.babysitterInfos,...req.body.babysitterInfos}
+    existingUser ={...existingUser._doc,...req.body}
+    console.log("existing",existingUser)
     const updatedUser = await User.findByIdAndUpdate(
       existingUser._id,
         existingUser,
@@ -137,7 +139,6 @@ res.json({ result: true, user: updatedUser });
         {new: true}
     
     );
-console.log("role2",existingUser.role)
 res.json({ result: true, user: updatedUser });}
   });
 
