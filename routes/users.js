@@ -31,7 +31,7 @@ router.post('/signup', (req, res) => {
 
 
       const newUser = new User({
-        email: req.body.email,
+        email: req.body.email.toLowerCase(),
         password: hash,
         token: uid2(32),
         
@@ -58,9 +58,9 @@ router.post('/signin', (req, res) => {
   }
 
 
-  User.findOne({ email: req.body.email }).then(data => {
+  User.findOne({ email: req.body.email.toLowerCase() }).then(data => {
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
-      res.json({ result: true, token: data.token });
+      res.json({ result: true, data: data.role });
     } else {
       res.json({ result: false, error: 'Utilisateur introuvable ou mot de passe incorrect' });
     }
