@@ -37,7 +37,7 @@ pusher.trigger('chat', 'message', req.body);
     idUser: await User.findOne({token: req.body.token}).then(data=>data._id),
     content: req.body.content,
     createdAt: req.body.createdAt,
-    updatedAt: req.body.updatedAt
+    updatedAt: new Date()
   })
   newMessage.save()
 
