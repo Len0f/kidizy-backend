@@ -7,6 +7,8 @@ var logger = require('morgan');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 
+var gardesRouter = require('./routes/gardes');
+
 var messageRouter = require ('./routes/messages')
 
 
@@ -24,11 +26,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-
+<<<<<<<<< Temporary merge branch 1
 app.use('/messages',messageRouter)
-
+=========
 app.use('/gardes', gardesRouter);
 
-
+>>>>>>>>> Temporary merge branch 2
 
 module.exports = app;
