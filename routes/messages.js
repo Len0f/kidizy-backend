@@ -31,16 +31,16 @@ router.delete("/:username", (req, res) => {
 });
 
 // Send message
-router.post('/', (req, res) => {
-  pusher.trigger('chat', 'message', req.body);
-  const userId= User.findOne({token: req.body.token}).then(data=>res.json(data._id))
+router.post('/', async (req, res) => {
+pusher.trigger('chat', 'message', req.body);
   const newMessage= new Message({
-    idUser: userId,
+    idUser: await User.findOne({token: req.body.token}).then(data=>data._id),
     content: req.body.content,
     createdAt: req.body.createdAt,
     updatedAt: req.body.updatedAt
   })
   newMessage.save()
+
 
   res.json({ result: true });
 });
