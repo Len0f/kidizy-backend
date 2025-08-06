@@ -90,7 +90,7 @@ router.put('/role', async (req, res) => {
 
 
 
-router.put('/submit', async (req, res) => {
+router.put('/', async (req, res) => {
   const token = req.body.token
 
   if (!token) {
@@ -118,7 +118,9 @@ if (isFirstUpdate) {
     });
   }
 }
-
+if(existingUser.role=="PENDING"){
+  return res.json({result: false})
+}
 
   if(existingUser.role=="BABYSITTER"){
     //existingUser.babysitterInfos = {...existingUser.babysitterInfos,...req.body.babysitterInfos}
@@ -189,8 +191,8 @@ router.post('/upload', async (req, res) => {
  const resultMove = await req.files.photoFromFront.mv(photoPath);
 
  if (!resultMove) {
-  console.log(resultMove)
-   const resultCloudinary = await cloudinary.uploader.upload(photoPath); console.log(resultCloudinary)
+
+   const resultCloudinary = await cloudinary.uploader.upload(photoPath);
 
     fs.unlinkSync(photoPath);
 
