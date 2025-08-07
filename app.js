@@ -12,6 +12,8 @@ var gardesRouter = require('./routes/gardes');
 var messageRouter = require ('./routes/messages')
 
 
+var gardesRouter = require('./routes/gardes');
+
 var app = express();
 
 const cors = require('cors');
@@ -24,11 +26,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-
+app.use('/messages',messageRouter)
 app.use('/gardes', gardesRouter);
 
-
-app.use('/messages',messageRouter)
 
 
 module.exports = app;
