@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 
 const parentInfosSchema =mongoose.Schema({
-    kids: Number,
+    kids: [{firstName:String, age:String}],
     subscription: Boolean
 })
+
 
 const babysitterInfosSchema =mongoose.Schema({
     CNI: String,
@@ -11,7 +12,11 @@ const babysitterInfosSchema =mongoose.Schema({
     age: String,
     price: Number,
     bio: String,
-    availability: Date,
+    availability: [{
+        day:String,
+        startHour: String,
+        endHour: String
+    }],
     interest: String,
     isDocOk: {type :Boolean, required: true, default: false},
     situation: String,
@@ -25,7 +30,7 @@ const usersSchema = mongoose.Schema({
     lastName: String,
     firstName:String,
     phone:String,
-    location: {lat: String, lon: String, adress:String},
+    location: {lat: String, lon: String, address:String},
     avatar: String,
     createdAt : Date,
     updatedAt: Date,
@@ -35,8 +40,7 @@ const usersSchema = mongoose.Schema({
     isValidated: Boolean,
     parentInfos: parentInfosSchema,
     babysitterInfos: babysitterInfosSchema,
-    isParent: {type: Boolean, default: false},
-    isBabysitter: {type: Boolean, default: false}
+    role: {type:String, enum: ['PARENT','BABYSITTER','PENDING'], required: true,default: 'PENDING' }
 });
 
 

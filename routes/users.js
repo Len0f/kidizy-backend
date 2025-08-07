@@ -8,6 +8,10 @@ const { checkBody } = require('../modules/checkBody');
 const uid2 = require('uid2');
 const bcrypt = require('bcrypt');
 const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
+const uniqid = require('uniqid');
+
 
 router.post('/signup', (req, res) => {
   if (!checkBody(req.body, ['email', 'password'])) {
@@ -28,7 +32,7 @@ router.post('/signup', (req, res) => {
 
 
       const newUser = new User({
-        email: req.body.email,
+        email: req.body.email.toLowerCase(),
         password: hash,
         token: uid2(32),
         
@@ -55,16 +59,41 @@ router.post('/signin', (req, res) => {
   }
 
 
-  User.findOne({ email: req.body.email }).then(data => {
+  User.findOne({ email: req.body.email.toLowerCase() }).then(data => {
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
-      res.json({ result: true, token: data.token });
+
+      res.json({ result: true, user: data });
+
     } else {
       res.json({ result: false, error: 'Utilisateur introuvable ou mot de passe incorrect' });
     }
   });
 });
 
-router.put('/submit', async (req, res) => {
+router.put('/role', async (req, res) => {
+  const { token, role } = req.body;
+
+  if (!token) {
+    return res.json({ result: false, error: 'Utilisateur inconnu' });
+  }
+
+  const updatedUser = await User.findOneAndUpdate(
+    {token},
+    { role, updatedAt: new Date() }, 
+    { new: true }
+  )
+
+  if (updatedUser) {
+    res.json({ result: true, user: updatedUser });
+  } else {
+    res.json({ result: false, error: 'Utilisateur introuvable' });
+  }
+});
+
+
+
+
+router.put('/', async (req, res) => {
   const token = req.body.token
 
   if (!token) {
@@ -92,23 +121,30 @@ if (isFirstUpdate) {
     });
   }
 }
-// existingUser.babysitterInfos= req.body.babysitterInfos
-// existingUser.markModified('babysitterInfos')
-// const newInfos = await existingUser.save()
-console.log('un',existingUser)
+if(existingUser.role=="PENDING"){
+  return res.json({result: false})
+}
 
-    existingUser.babysitterInfos = {...existingUser.babysitterInfos,...req.body.babysitterInfos}
-
-    //existingUser.markModified('babysitterInfos')
+  if(existingUser.role=="BABYSITTER"){
+    //existingUser.babysitterInfos = {...existingUser.babysitterInfos,...req.body.babysitterInfos}
+    existingUser ={...existingUser._doc,...req.body}
+    console.log("existing",existingUser)
     const updatedUser = await User.findByIdAndUpdate(
       existingUser._id,
         existingUser,
         {new: true}
-      
     );
 
 res.json({ result: true, user: updatedUser });
-  
+  }else
+  {existingUser.parentInfos = {...existingUser.parentInfos,...req.body.parentInfos}   
+    const updatedUser = await User.findByIdAndUpdate(
+      existingUser._id,
+        existingUser,
+        {new: true}
+    
+    );
+res.json({ result: true, user: updatedUser });}
   });
 
   	
@@ -141,13 +177,33 @@ router.get('/me/:token', (req, res) => {
 
 router.get('/id/:id', (req, res) => {
 
-  User.findById({ _id: req.params.id }).then(data => {
+  User.findById({ _id: req.params.id }).select('-password','-token').then(data => {
     if (data) {
       res.json({ result: true, user: data });
     } else {
       res.json({ result: false, error: 'Utilisateur introuvable' });
     }
   });
+});
+
+router.post('/upload', async (req, res) => {
+ 
+ const id = uniqid()
+ const ext = ".jpg"||".pdf"||".png"||".jpeg"||".webp"
+ const photoPath = `./tmp/${id}${ext}`;
+ const resultMove = await req.files.photoFromFront.mv(photoPath);
+
+ if (!resultMove) {
+
+   const resultCloudinary = await cloudinary.uploader.upload(photoPath);
+
+    fs.unlinkSync(photoPath);
+
+    res.json({ result: true, url: resultCloudinary.secure_url });     
+ } else {
+   res.json({ result: false, error: resultMove });
+ }
+ 
 });
 
 module.exports = router 
@@ -163,4 +219,4 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
-module.exports = router;
+
