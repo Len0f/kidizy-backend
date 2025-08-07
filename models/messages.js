@@ -10,6 +10,6 @@ createdAt: Date,
 updatedAt: Date
 });
 
-const Messages = mongoose.model('conversations', messagesSchema);
+const Messages = mongoose.model('messages', messagesSchema);
 
 module.exports = Messages;
