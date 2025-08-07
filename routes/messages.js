@@ -38,10 +38,8 @@ router.post('/', async (req, res) => {
     }
 pusher.trigger('chat', 'message', req.body);
   const newMessage= new Message({
-    idUser: await User.findOne({token: req.body.token}).then(data=>data._id),
-    message: req.body.message,
-    createdAt: req.body.createdAt,
-    updatedAt: new Date()
+    idUser: req.body.idUser,
+    message: req.body.message
   })
   newMessage.save()
 
@@ -57,7 +55,7 @@ router.get('/:token',async (req,res)=>{
     if (!userFund){
         return res.json('User not found')
     }
-    const messagesUser = await Message.find({idUser: userFund._id}).select('createdAt message token updatedAt')
+    const messagesUser = await Message.find({idUser: userFund._id}).select('createdAt message token updatedAt idUser')
     res.json({messagesUser})
 })
 
