@@ -4,6 +4,7 @@ var Message = require('../models/messages')
 var User = require('../models/users')
 
 const Pusher = require('pusher');
+const { checkBody } = require('../modules/checkBody');
 const pusher = new Pusher({
   appId: process.env.PUSHER_APPID,
   key: process.env.PUSHER_KEY,
@@ -32,10 +33,13 @@ router.delete("/:username", (req, res) => {
 
 // Send message
 router.post('/', async (req, res) => {
+    if (!checkBody(req.body,['message'])){
+        return res.json('Message field empty')
+    }
 pusher.trigger('chat', 'message', req.body);
   const newMessage= new Message({
     idUser: await User.findOne({token: req.body.token}).then(data=>data._id),
-    content: req.body.content,
+    content: req.body.message,
     createdAt: req.body.createdAt,
     updatedAt: new Date()
   })
@@ -44,5 +48,18 @@ pusher.trigger('chat', 'message', req.body);
 
   res.json({ result: true });
 });
+
+router.get('/:token',async (req,res)=>{
+    if(!checkBody(req.params,['token'])){
+        return res.json('token absent')
+    }
+    const userFund = await User.findOne({token: req.params.token})
+   console.log('user',userFund)
+    if (!userFund){
+        return res.json('User not found')
+    }
+    const messagesUser = await Message.find({idUser: userFund._id})
+    res.json({messages: messagesUser})
+})
 
 module.exports = router;
