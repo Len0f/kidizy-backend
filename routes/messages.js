@@ -14,18 +14,18 @@ const pusher = new Pusher({
 });
 
 // Join chat
-router.put('/:username', (req, res) => {
+router.put('/:token', (req, res) => {
   pusher.trigger('chat', 'join', {
-    username: req.params.username,
+    token: req.params.token,
   });
 
   res.json({ result: true });
 });
 
 // Leave chat
-router.delete("/:username", (req, res) => {
+router.delete("/:token", (req, res) => {
   pusher.trigger('chat', 'leave', {
-    username: req.params.username,
+    token: req.params.token,
   });
 
   res.json({ result: true });
@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
 pusher.trigger('chat', 'message', req.body);
   const newMessage= new Message({
     idUser: await User.findOne({token: req.body.token}).then(data=>data._id),
-    content: req.body.message,
+    message: req.body.message,
     createdAt: req.body.createdAt,
     updatedAt: new Date()
   })
@@ -54,12 +54,11 @@ router.get('/:token',async (req,res)=>{
         return res.json('token absent')
     }
     const userFund = await User.findOne({token: req.params.token})
-   console.log('user',userFund)
     if (!userFund){
         return res.json('User not found')
     }
-    const messagesUser = await Message.find({idUser: userFund._id})
-    res.json({messages: messagesUser})
+    const messagesUser = await Message.find({idUser: userFund._id}).select('createdAt message token updatedAt')
+    res.json({messagesUser})
 })
 
 module.exports = router;

@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 
 const messagesSchema = mongoose.Schema({
 idUser: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
-content: String,
+message: String,
 createdAt: Date,
 updatedAt: Date
 });

@@ -174,7 +174,7 @@ router.get('/me/:token', (req, res) => {
 
 router.get('/id/:id', (req, res) => {
 
-  User.findById({ _id: req.params.id }).then(data => {
+  User.findById({ _id: req.params.id }).select('-password','-token').then(data => {
     if (data) {
       res.json({ result: true, user: data });
     } else {
