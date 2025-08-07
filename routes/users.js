@@ -11,6 +11,7 @@ const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 const uniqid = require('uniqid');
+const { token } = require('morgan');
 
 router.post('/signup', (req, res) => {
   if (!checkBody(req.body, ['email', 'password'])) {
@@ -60,7 +61,9 @@ router.post('/signin', (req, res) => {
 
   User.findOne({ email: req.body.email.toLowerCase() }).then(data => {
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
+
       res.json({ result: true, user: data });
+
     } else {
       res.json({ result: false, error: 'Utilisateur introuvable ou mot de passe incorrect' });
     }
