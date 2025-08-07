@@ -11,7 +11,7 @@ const EMAIL_REGEX = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 const uniqid = require('uniqid');
-const { token } = require('morgan');
+
 
 router.post('/signup', (req, res) => {
   if (!checkBody(req.body, ['email', 'password'])) {
