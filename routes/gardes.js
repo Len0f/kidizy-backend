@@ -10,7 +10,7 @@ const User = require('../models/users');
 
 
 // route pour la creation de dispo babysitter  
-router.post('/gardes/:token', async (req, res) => {
+router.post('/:token', async (req, res) => {
   const { day, startHour, endHour } = req.body;
   if (!day || !startHour || !endHour) {
     return res.json({ result: false, error: 'Champs manquants' });
