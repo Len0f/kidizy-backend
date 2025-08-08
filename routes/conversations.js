@@ -4,10 +4,10 @@ require('../connection/connection');
 const User = require('../models/users');
 const Proposition = require('../models/propositions')
 const { checkBody } = require('../modules/checkBody');
+const Conversation = require('../models/conversations')
 
 router.post('/',async (req,res)=>{
-    const { token,idUserParent,idUserBabysitter,propoStart,propoEnd,createdAt,updatedAt,
-        rating,comment,opinionParent,opinionBabysitter,isAccepted, firstName,lastName,kids,day } = req.body;
+    const { token,idUserParent,idUserBabysitter,updatedAt} = req.body;
      
         if (!checkBody(req.body, ['token'])) {
             res.json({ result: false, error: 'Champs manquants ou vides' });
@@ -16,26 +16,15 @@ router.post('/',async (req,res)=>{
      if (!token) {
         return res.json({ result: false, error: 'Utilisateur inconnu' });
   }
-    const existingUser = await User.findOne({token})
+  const existingUser = await User.findOne({token})
     if (existingUser){
-        const newProposition = new Proposition({
+        const newConversation = new Conversation({
             idUserParent,
             idUserBabysitter,
-            firstName,
-            lastName,
-            propoStart,
-            kids,
-            propoEnd,
-            day,
-            rating,
-            comment,
-            opinionParent,
-            opinionBabysitter,
-            isAccepted,
             updatedAt
         })
-        newProposition.save()
-        res.json({result: true, newProposition})
+        newConversation.save()
+        res.json({result: true, newConversation})
     }
 })
 module.exports = router;
