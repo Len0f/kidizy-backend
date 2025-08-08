@@ -27,4 +27,17 @@ router.post('/',async (req,res)=>{
         res.json({result: true, newConversation})
     }
 })
+
+router.get('/',async (req,res)=>{
+    const { token, idUserParent,idUserBabysitter} = req.query;
+     
+        if (!checkBody(req.query, ['token','idUserParent','idUserBabysitter'])) {
+            res.json({ result: false, error: 'Champs manquants ou vides' });
+            return;
+     }
+     if (!token) {
+        return res.json({ result: false, error: 'Utilisateur inconnu' });
+  }
+})
+
 module.exports = router;
