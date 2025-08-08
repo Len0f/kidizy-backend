@@ -1,8 +1,5 @@
 const mongoose = require('mongoose');
 
-
-
-
 const propositionsSchema = mongoose.Schema({
 idUserParent: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
 idUserBabysitter: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },

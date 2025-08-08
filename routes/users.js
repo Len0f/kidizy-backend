@@ -12,8 +12,10 @@ const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 const uniqid = require('uniqid');
 const { token } = require('morgan');
+// const { default: SearchScreen } = require('../../kidizy.frontend/screens/SearchScreen');
 
 
+// ---------------- INSCRIPTION
 router.post('/signup', (req, res) => {
   if (!checkBody(req.body, ['email', 'password'])) {
     res.json({ result: false, error: 'Champs manquants ou vides' });
@@ -23,10 +25,7 @@ router.post('/signup', (req, res) => {
     return
   }
 
-
   // Vérifiez si l'utilisateur n'a pas déjà été enregistré
-
-
   User.findOne({ email: req.body.email }).then(data => {
     if (data === null) {
       const hash = bcrypt.hashSync(req.body.password, 10);
@@ -52,7 +51,7 @@ router.post('/signup', (req, res) => {
   });
 });
 
-
+// ---------------- CONNECTION
 router.post('/signin', (req, res) => {
   if (!checkBody(req.body, ['email', 'password'])) {
     res.json({ result: false, error: 'Champs manquants ou vides' });
@@ -71,6 +70,7 @@ router.post('/signin', (req, res) => {
   });
 });
 
+// ---------------- AJOUT DU ROLE
 router.put('/role', async (req, res) => {
   const { token, role } = req.body;
 
@@ -91,9 +91,7 @@ router.put('/role', async (req, res) => {
   }
 });
 
-
-
-
+// ---------------- ROUTE USER
 router.put('/', async (req, res) => {
   const token = req.body.token
 
@@ -148,7 +146,7 @@ res.json({ result: true, user: updatedUser });
 res.json({ result: true, user: updatedUser });}
   });
 
-  	
+// ---------------- SUPPRIMER UN UTILISATEUR
 router.delete('/', (req, res) => {
   const token = req.body.token;
 
@@ -165,6 +163,7 @@ router.delete('/', (req, res) => {
   })
 })
 
+// ---------------- TROUVER L'UTILISATEUR CONNECTE
 router.get('/me/:token', (req, res) => {
 
   User.findOne({ token: req.params.token }).then(data => {
@@ -176,6 +175,7 @@ router.get('/me/:token', (req, res) => {
   });
 });
 
+// ---------------- RECUPERER L'UTILISATEUR PAR ID
 router.get('/id/:id', (req, res) => {
 
   User.findById({ _id: req.params.id }).select('-password','-token').then(data => {
@@ -187,6 +187,7 @@ router.get('/id/:id', (req, res) => {
   });
 });
 
+// ---------------- UPLOADER UNE IMAGE
 router.post('/upload', async (req, res) => {
  
  const id = uniqid()
@@ -207,17 +208,31 @@ router.post('/upload', async (req, res) => {
  
 });
 
-module.exports = router 
-
-
-
-
-
-
-
-/* GET users listing. */
+// ---------------- RECUPERER LA LISTE DES UTILISATEURS.
 router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
+// -------------- RECUPERATION DES BABYSITTERS (SearchScreen)
+router.get('/babysitters', async (req, res) => {
+    const babysitters = await User.find({role: 'BABYSITTER'})
+    .select('firstName lastName avatar rating babysits babysitterInfos.age babysitterInfos.price babysitterInfos.availability location');
+    // methode .select() : permet de sélectionner les champs à inclure ou exclure lors de la requête find.
 
+    const formattedBaby = babysitters.map(baby => ({
+      _id: baby._id,
+      firsName: baby.firstName,
+      lastName: baby.lastName,
+      avatar: baby.avatar,
+      rating: baby.rating,
+      babysits: baby.babysits,
+      age: baby.babysitterInfos?.age,
+      price: baby.babysitterInfos?.price,
+      availability: baby.babysitterInfos?.availability,
+      location: baby.location,
+    }));
+
+    res.json({result : true, babysitters: formattedBaby});
+});
+
+module.exports = router 
