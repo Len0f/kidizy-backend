@@ -47,15 +47,15 @@ pusher.trigger('chat', 'message', req.body);
   res.json({ result: true });
 });
 
-router.get('/:token',async (req,res)=>{
-    if(!checkBody(req.params,['token'])){
+router.get('/',async (req,res)=>{
+    if(!checkBody(req.query,['token','conversation'])){
         return res.json('token absent')
     }
-    const userFund = await User.findOne({token: req.params.token})
-    if (!userFund){
+    const existingUser = await User.findOne({token: req.query.token})
+    if (!existingUser){
         return res.json('User not found')
     }
-    const messagesUser = await Message.find({idUser: userFund._id}).select('createdAt message token updatedAt idUser')
+    const messagesUser = await Message.find({conversationId: req.query.conversation}).select('createdAt message token updatedAt idUser')
     res.json({messagesUser})
 })
 
