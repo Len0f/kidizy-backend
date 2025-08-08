@@ -6,18 +6,17 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-
 var gardesRouter = require('./routes/gardes');
-
+var conversationRouter = require ('./routes/conversations')
 var messageRouter = require ('./routes/messages')
 
-
-var gardesRouter = require('./routes/gardes');
+var propositionRouter = require('./routes/propositions')
 
 var app = express();
 
 const cors = require('cors');
 app.use(cors());
+
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -26,12 +25,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-
-
+app.use('/propositions',propositionRouter)
+app.use('/conversations',conversationRouter)
 
 app.use('/messages',messageRouter)
 app.use('/gardes', gardesRouter);
-
-
 
 module.exports = app;
