@@ -34,7 +34,7 @@ const usersSchema = mongoose.Schema({
     avatar: String,
     createdAt : Date,
     updatedAt: Date,
-    rating: Number,
+    rating: {type: Number, required:true, default:1},
     babysits: Number,
     conversations: { type: mongoose.Schema.Types.ObjectId, ref: 'conversations' },
     isValidated: Boolean,

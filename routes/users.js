@@ -109,7 +109,7 @@ if (!existingUser) {
 }
 
 const isFirstUpdate =
-  !existingUser.lastName || !existingUser.firsName;
+  !existingUser.lastName || !existingUser.firstName;
 
 if (isFirstUpdate) {
   if (!checkBody(req.body, ['firstName', 'lastName']))
@@ -135,8 +135,8 @@ if(existingUser.role=="PENDING"){
     );
 
 res.json({ result: true, user: updatedUser });
-  }else
-  {existingUser.parentInfos = {...existingUser.parentInfos,...req.body.parentInfos}   
+  }else if(existingUser.role=="PARENT"){
+  existingUser ={...existingUser._doc,...req.body}   
     const updatedUser = await User.findByIdAndUpdate(
       existingUser._id,
         existingUser,
