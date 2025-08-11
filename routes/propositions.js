@@ -38,4 +38,24 @@ router.post('/',async (req,res)=>{
         res.json({result: true, newProposition})
     }
 })
+
+router.get('/',async (req,res)=>{
+    const {token, id} = req.query;
+
+        if (!checkBody(req.query, ['token','id'])) {
+            res.json({ result: false, error: 'Champs manquants ou vides' });
+            return;
+     }
+     if (!token || !id) {
+        return res.json({ result: false, error: 'Utilisateur inconnu' });
+     }
+const propositionBaby= await Proposition.find({idUserBabysitter: id}).populate('idUserParent', 'avatar firstName lastName')
+const filteredPropositions = await propositionBaby.filter(proposition => 
+  ["PENDING", "NEGOCIATING"].includes(proposition.isAccepted)
+);
+
+res.json({result:true, filteredPropositions})
+
+
+})
 module.exports = router;
