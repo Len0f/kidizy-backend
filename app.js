@@ -16,7 +16,12 @@ var app = express();
 
 const cors = require('cors');
 app.use(cors());
-
+const fileUpload = require('express-fileupload');
+app.use(fileUpload({
+  useTempFiles: true,           
+  tempFileDir: './tmp',     
+  createParentPath: true,       
+}));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -30,5 +35,6 @@ app.use('/conversations',conversationRouter)
 
 app.use('/messages',messageRouter)
 app.use('/gardes', gardesRouter);
+app.use(require('express-fileupload')());
 
 module.exports = app;
