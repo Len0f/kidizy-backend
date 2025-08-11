@@ -13,6 +13,7 @@
     "debug": "~2.6.9",
     "dotenv": "^17.2.1",
     "express": "~4.16.1",
+    "express-fileupload": "^1.5.2",
     "mongoose": "^8.17.0",
     "morgan": "~1.9.1",
     "pusher": "5",
