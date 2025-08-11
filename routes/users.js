@@ -12,6 +12,8 @@ const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 const uniqid = require('uniqid');
 const { token } = require('morgan');
+const path = require('path');
+
 // const { default: SearchScreen } = require('../../kidizy.frontend/screens/SearchScreen');
 
 
@@ -187,25 +189,37 @@ router.get('/id/:id', (req, res) => {
   });
 });
 
-// ---------------- UPLOADER UNE IMAGE
+
 router.post('/upload', async (req, res) => {
- 
- const id = uniqid()
- const ext = ".jpg"||".pdf"||".png"||".jpeg"||".webp"
- const photoPath = `./tmp/${id}${ext}`;
- const resultMove = await req.files.photoFromFront.mv(photoPath);
+  try {
+    // 1) Garde-fous
+    if (!req.files || !req.files.photoFromFront) {
+      return res.json({ result: false, error: 'Aucun fichier reçu (champ attendu: photoFromFront)' });
+    }
 
- if (!resultMove) {
+    const file = req.files.photoFromFront; // express-fileupload File
+    // Sécuriser l’extension à partir du mimetype (fallback .jpg)
+    const ext = (file.mimetype && file.mimetype.split('/')[1]) ? `.${file.mimetype.split('/')[1]}` : '.jpg';
 
-   const resultCloudinary = await cloudinary.uploader.upload(photoPath);
+    // 2) Chemin temporaire local
+    const id = uniqid();
+    const photoPath = path.join('./tmp', `${id}${ext}`);
 
-    fs.unlinkSync(photoPath);
+    // 3) Move local
+    await file.mv(photoPath);
 
-    res.json({ result: true, url: resultCloudinary.secure_url });     
- } else {
-   res.json({ result: false, error: resultMove });
- }
- 
+    // 4) Upload vers Cloudinary
+    const resultCloudinary = await cloudinary.uploader.upload(photoPath);
+
+    // 5) Nettoyage
+    try { fs.unlinkSync(photoPath); } catch (_) {}
+
+    // 6) Réponse
+    res.json({ result: true, url: resultCloudinary.secure_url });
+  } catch (err) {
+    console.error('UPLOAD ERROR:', err);
+    res.json({ result: false, error: err.message || 'Upload échoué' });
+  }
 });
 
 // ---------------- RECUPERER LA LISTE DES UTILISATEURS.
