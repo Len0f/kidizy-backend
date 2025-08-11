@@ -227,26 +227,231 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
-// -------------- RECUPERATION DES BABYSITTERS (SearchScreen)
+// -------------- RECUPERATION DES BABYSITTERS (avec filtres)
 router.get('/babysitters', async (req, res) => {
-    const babysitters = await User.find({role: 'BABYSITTER'})
-    .select('firstName lastName avatar rating babysits babysitterInfos.age babysitterInfos.price babysitterInfos.availability location');
-    // methode .select() : permet de sélectionner les champs à inclure ou exclure lors de la requête find.
+  
+  // On lit les filtres envoyé dans l'URL.
+  const {
+    rating,
+    ageRange,
+    day,
+    hours,
+    parentLat,
+    parentLon,
+    maxDistanceKm,
+    sort,
+  
+    // Scroll infini : on récupère par tranche pour alléger l'affichage.
+    offset = 0,   // combien d'item déjà chargé côté front.
+    limit = 20,   // combien on en veut en plus.
+  } = req.query;
 
-    const formattedBaby = babysitters.map(baby => ({
-      _id: baby._id,
-      firsName: baby.firstName,
-      lastName: baby.lastName,
-      avatar: baby.avatar,
-      rating: baby.rating,
-      babysits: baby.babysits,
-      age: baby.babysitterInfos?.age,
-      price: baby.babysitterInfos?.price,
-      availability: baby.babysitterInfos?.availability,
-      location: baby.location,
-    }));
+  // Fonctions réutilisables.
+  // Permet de convertir une valeur (v) en nombre si elle existe.
+  const toNum = (v) => (v === undefined || v === null || v === '' ? undefined : Number(v));
 
-    res.json({result : true, babysitters: formattedBaby});
+  // Transforme l'âge souvent en chaine en nombre entier.
+  const parseAge = (v) => (v !== undefined && v !== null ? parseInt(v, 10) : undefined);
+
+  // Savoir si deux tranches horaires se chevauchent.
+  // Convertit "08h", "8h", "08h30", "20h00" -> minutes depuis minuit
+  const parseHour = (str) => {
+    if (!str) return null;
+    const parts = String(str).replace('h', ':').split(':').map(Number);
+    const h = parts[0] || 0;
+    const m = parts[1] || 0;
+    return h * 60 + m;
+  };
+
+  // Chevauchement entre wanted "HHh[-HHh]" et un slot (start/end) au même format
+  const timeOverlap = (wanted, start, end) => {
+    if (!wanted) return true;
+
+    const [wStartStr, wEndStr] = String(wanted).split('-');
+    const wStart = parseHour(wStartStr);
+    const wEnd   = parseHour(wEndStr);
+    const sStart = parseHour(start);
+    const sEnd   = parseHour(end);
+
+    if ([wStart, wEnd, sStart, sEnd].includes(null)) return false;
+
+    // chevauchement strict
+    return sStart < wEnd && sEnd > wStart;
+  };
+
+  // Calcul de la distance en km entre 2 points GPS par Haversine.
+  const getDistanceKm = (lat1, lon1, lat2, lon2) => {
+      const R = 6371;
+      const toRad = (d) => (d * Math.PI) / 180;
+      const dLat = toRad(lat2 - lat1);
+      const dLon = toRad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) ** 2;
+        return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  // On doit combiner la collection des babyssiters avec la moyenne les ratings des gardes.
+  // $match / $lookup / $addField / $avg / $size / $ifNull / ... : doc mangoDB https://www.mongodb.com/docs/manual/reference/operator/aggregation-pipeline
+  const agg = await User.aggregate([                  // User.aggregate à la place de find : permet de tout calculer en base.
+    {$match: {role: 'BABYSITTER'}},                   // Permet de garder dans user que les champs avec le rôle de babysitter (on vire parent et pending)
+    {
+      $lookup: {                                      // joint deux collections ensemble (ici users et babysits)
+        from: 'babysits',                             // nom de la collection à joindre.
+        localField: '_id',                            // champs des users.
+        foreignField: 'idUserBabysitter',             // champs des babysits (gardes)
+        as: 'gardeRatings'                             // nom du tableau de résultats créé.
+      }
+    },
+    {
+      $addFields: {                                   // Ajout de nouveau champs calculés.
+        ratingAvg: {$avg : '$gardeRatings.rating'},    // Fait la moyenne des champs ratings à l'intérieur du tableau gardeRating, si aucune note = null.
+        babysitsCount: {$size: {$ifNull: ['$gardeRatings', []]}}       // compte le nombre de gardes effectuées.
+      }
+    },
+    {
+      // Equivalent à .select.
+      $project: {                                     // choisis les champs qu'on veut dans le résultat final.
+        firstName: 1,                                 // 1 : garde tel quel le champs.
+        lastName: 1,
+        avatar: 1,
+        rating: {$ifNull: ['$ratingAvg', 0]},         // $ifNull permet de remplacer null par 0 pour simplifier.
+        ratingFloor: { $floor: { $ifNull: ['$ratingAvg', 0] } }, // pour comparer à "note"
+        babysits:
+        '$babysitsCount',
+        'babysitterInfos.age': 1,
+        'babysitterInfos.price': 1,
+        'babysitterInfos.availability': 1,
+        location: 1,
+      }
+    }
+  ])
+
+  // Calcul des distances + filtres.
+  const parent = parentLat && parentLon;
+  const wantedRating = rating ? Number(rating) : undefined;
+
+  let babysitters = agg.map(b => {
+    let _distanceKm;
+    if(parent && b?.location?.lat && b?.location?.lon) {
+      _distanceKm = getDistanceKm(
+        parseFloat(parentLat),
+        parseFloat(parentLon),
+        parseFloat(b.location.lat),
+        parseFloat(b.location.lon),
+      );
+    }
+    return {...b, _distanceKm};
+  })
+  .filter(b => {
+    // Notes
+    if (wantedRating !== undefined && !Number.isNaN(wantedRating)) {
+      const note = Number(b.rating ?? 0); // si null -> 0
+      if (Math.floor(note) !== wantedRating) return false;
+    }
+
+
+    // Tranches d'âge
+    if (ageRange) {
+      const rawAge = b?.babysitterInfos?.age;
+    
+      // exclure si champ âge manquant / vide
+      if (rawAge === undefined || rawAge === null || rawAge === '') return false;
+    
+      const age = parseAge(rawAge);
+      if (Number.isNaN(age)) return false;
+    
+      const [minAge, maxAge] = ageRange.split('-').map(Number);
+      if (!(age >= minAge && age <= (maxAge || age))) return false;
+    }
+
+
+    // Distances
+    if (maxDistanceKm && parent) {
+      // exclure si coordonnées manquantes
+      if (b._distanceKm === undefined) return false;
+      if (b._distanceKm > Number(maxDistanceKm)) return false;
+    }
+
+    // Jours
+    if (day) {
+      const okDay = b?.babysitterInfos?.availability?.some(s => s.day === day);
+      // exclure si pas d'availability OU pas ce jour
+      if (!okDay) return false;
+    }
+
+    // Tranches horaires (avec chevauchements)
+    if (hours) {
+      const okHours = b?.babysitterInfos?.availability?.some(s =>
+        timeOverlap(hours, s.startHour, s.endHour)
+      );
+      // exclure si pas d'availability OU pas de chevauchement
+      if (!okHours) return false;
+    }
+
+    return true;
+  });
+
+  // Tri dans l'ordre
+  if (sort) {
+      const keys = String(sort).split(',').map(s => s.trim()).filter(Boolean);
+      const metric = (o, k) => {
+        switch (k) {
+          case 'rating':
+          case 'ratingAvg': return toNum(o.rating) ?? 0;
+          case 'distance':  return o._distanceKm ?? Number.POSITIVE_INFINITY;
+          case 'price':     return toNum(o?.babysitterInfos?.price) ?? Number.POSITIVE_INFINITY;
+          case 'age':       return parseAge(o?.babysitterInfos?.age) ?? Number.POSITIVE_INFINITY;
+          default:          return 0;
+        }
+      };
+      babysitters.sort((a, b) => {
+        for (const raw of keys) {
+          const desc = raw.startsWith('-');
+          const k = desc ? raw.slice(1) : raw;
+          const va = metric(a, k);
+          const vb = metric(b, k);
+          const aU = va === undefined || Number.isNaN(va);
+          const bU = vb === undefined || Number.isNaN(vb);
+          if (aU && bU) continue;
+          if (aU) return 1;
+          if (bU) return -1;
+          if (va < vb) return desc ? 1 : -1;
+          if (va > vb) return desc ? -1 : 1;
+        }
+        return 0;
+      });
+    }
+
+  // Scroll infini
+  const start = Math.max(0, Number(offset));
+  const limitscroll = Math.max(1, Number(limit));
+  const total = babysitters.length;
+  const slice = babysitters.slice(start, start + limitscroll);
+
+  // Format des résultats.
+  const items = slice.map(baby => ({
+    _id: baby._id,
+    firstName: baby.firstName,
+    lastName: baby.lastName,
+    avatar: baby.avatar,
+    rating: Number((baby.rating ?? 0).toFixed(2)), // pour affichage étoiles
+    babysits: baby.babysits ?? 0,
+    age: baby.babysitterInfos?.age,
+    price: baby.babysitterInfos?.price,
+    availability: baby.babysitterInfos?.availability,
+    location: baby.location,
+    distanceKm: baby._distanceKm !== undefined ? Number(baby._distanceKm.toFixed(1)) : undefined,
+  }));
+  
+  res.json({
+    result: true,
+    babysitters: items,
+    nextOffset: start + items.length,
+    hasMore: start + items.length < total,
+    total,
+  });
 });
 
 module.exports = router 
