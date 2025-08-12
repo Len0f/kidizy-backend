@@ -26,6 +26,7 @@ const babysitterInfosSchema =mongoose.Schema({
 const usersSchema = mongoose.Schema({
 	token: String,
     email: String,
+    count:Number,
     password: String,
     lastName: String,
     firstName:String,
@@ -35,7 +36,6 @@ const usersSchema = mongoose.Schema({
     createdAt : Date,
     updatedAt: Date,
     rating: {type: Number, required:true, default:1},
-    babysits: Number,
     conversations: { type: mongoose.Schema.Types.ObjectId, ref: 'conversations' },
     isValidated: Boolean,
     parentInfos: parentInfosSchema,

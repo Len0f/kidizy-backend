@@ -29,14 +29,23 @@ router.post('/',async (req,res)=>{
 })
 
 router.get('/',async (req,res)=>{
-    const { token, idUserParent,idUserBabysitter} = req.query;
-     
-        if (!checkBody(req.query, ['token','idUserParent','idUserBabysitter'])) {
+    const { token, id,} = req.query;
+
+        if (!checkBody(req.query, ['token','id'])) {
             res.json({ result: false, error: 'Champs manquants ou vides' });
             return;
      }
-     if (!token) {
+     if (!token || !id) {
         return res.json({ result: false, error: 'Utilisateur inconnu' });
+  }
+  const roleId= await User.findOne({_id:id})
+
+  if (roleId.role==="PARENT"){
+    const myConversations = await Conversation.find({idUserParent:id}).populate('idUserBabysitter','avatar firstName lastName')
+    res.json({result: true,myConversations})
+  }else if (roleId.role==='BABYSITTER'){
+    const myConversations = await Conversation.find({idUserBabysitter:id}).populate('idUserParent','avatar firstName lastName')
+    res.json({result: true,myConversations})
   }
 })
 

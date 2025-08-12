@@ -9,6 +9,7 @@ idUserBabysitter: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
 realStart: Date,
 realEnd: Date,
 rating: Number,
+createdAt: Date,
 proposion: { type: mongoose.Schema.Types.ObjectId, ref: 'propositions' }
 });
 
