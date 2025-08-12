@@ -55,7 +55,7 @@ router.get('/',async (req,res)=>{
     if (!existingUser){
         return res.json('User not found')
     }
-    const messagesUser = await Message.find({conversationId: req.query.conversation}).select('createdAt message token updatedAt idUser')
+    const messagesUser = await Message.find({conversationId: req.query.conversation}).select('createdAt message updatedAt idUser')
     res.json({messagesUser})
 })
 
