@@ -239,11 +239,7 @@ router.get('/babysitters', async (req, res) => {
     parentLat,
     parentLon,
     maxDistanceKm,
-    sort,
-  
-    // Scroll infini : on récupère par tranche pour alléger l'affichage.
-    offset = 0,   // combien d'item déjà chargé côté front.
-    limit = 20,   // combien on en veut en plus.
+    sort
   } = req.query;
 
   // Fonctions réutilisables.
@@ -284,7 +280,7 @@ router.get('/babysitters', async (req, res) => {
       const R = 6371;
       const toRad = (d) => (d * Math.PI) / 180;
       const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
+      const dLon = toRad(lon2 - lon1);  
       const a =
         Math.sin(dLat / 2) ** 2 +
         Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
@@ -332,7 +328,8 @@ router.get('/babysitters', async (req, res) => {
   const parent = parentLat && parentLon;
   const wantedRating = rating ? Number(rating) : undefined;
 
-  let babysitters = agg.map(b => {
+  let babysitters = agg
+  .map(b => {
     let _distanceKm;
     if(parent && b?.location?.lat && b?.location?.lon) {
       _distanceKm = getDistanceKm(
@@ -424,34 +421,26 @@ router.get('/babysitters', async (req, res) => {
       });
     }
 
-  // Scroll infini
-  const start = Math.max(0, Number(offset));
-  const limitscroll = Math.max(1, Number(limit));
-  const total = babysitters.length;
-  const slice = babysitters.slice(start, start + limitscroll);
-
   // Format des résultats.
-  const items = slice.map(baby => ({
-    _id: baby._id,
-    firstName: baby.firstName,
-    lastName: baby.lastName,
-    avatar: baby.avatar,
-    rating: Number((baby.rating ?? 0).toFixed(2)), // pour affichage étoiles
-    babysits: baby.babysits ?? 0,
-    age: baby.babysitterInfos?.age,
-    price: baby.babysitterInfos?.price,
-    availability: baby.babysitterInfos?.availability,
-    location: baby.location,
-    distanceKm: baby._distanceKm !== undefined ? Number(baby._distanceKm.toFixed(1)) : undefined,
-  }));
-  
-  res.json({
-    result: true,
-    babysitters: items,
-    nextOffset: start + items.length,
-    hasMore: start + items.length < total,
-    total,
-  });
+    const items = babysitters.map(baby => ({
+      _id: baby._id,
+      firstName: baby.firstName,
+      lastName: baby.lastName,
+      avatar: baby.avatar,
+      rating: Number((baby.rating ?? 0).toFixed(2)),
+      babysits: baby.babysits ?? 0,
+      age: baby.babysitterInfos?.age,
+      price: baby.babysitterInfos?.price,
+      availability: baby.babysitterInfos?.availability,
+      location: baby.location,
+      distanceKm: baby._distanceKm !== undefined ? Number(baby._distanceKm.toFixed(1)) : undefined,
+    }));
+    
+    res.json({
+      result: true,
+      babysitters: items,
+      total: items.length, // MODIF: plus de nextOffset/hasMore
+    });
 });
 
 module.exports = router 
