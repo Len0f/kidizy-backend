@@ -55,7 +55,19 @@ const filteredPropositions = await propositionBaby.filter(proposition =>
 );
 
 res.json({result:true, filteredPropositions})
-
-
 })
+
+router.get('/id',async (req,res)=>{
+    const {token, id} = req.query;
+
+        if (!checkBody(req.query, ['token','id'])) {
+            res.json({ result: false, error: 'Champs manquants ou vides' });
+            return;
+     }
+     if (!token || !id) {
+        return res.json({ result: false, error: 'Utilisateur inconnu' });
+     }
+     const propo= await Proposition.findById(id)
+     res.json({result: true, propo})
+    })
 module.exports = router;
