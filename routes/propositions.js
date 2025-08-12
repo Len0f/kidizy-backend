@@ -38,4 +38,6 @@ router.post('/',async (req,res)=>{
         res.json({result: true, newProposition})
     }
 })
-module.exports = router;
+
+
+module.exports = router

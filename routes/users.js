@@ -168,7 +168,7 @@ router.delete('/', (req, res) => {
 // ---------------- TROUVER L'UTILISATEUR CONNECTE
 router.get('/me/:token', (req, res) => {
 
-  User.findOne({ token: req.params.token }).then(data => {
+  User.findOne({ token: req.params.token }).select('-password').then(data => {
     if (data) {
       res.json({ result: true, user: data });
     } else {
