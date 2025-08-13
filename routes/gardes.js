@@ -1,11 +1,44 @@
 var express = require('express');
 var router = express.Router();
+var Garde = require('../models/babysits')
 
 
 require('../connection/connection');
 const User = require('../models/users');
 
 
+router.post('/gardes',async (req,res)=>{
+    const { token,idUserParent,idUserBabysitter,realStart,
+      realEnd,ratingB,ratinP,opinionParent,opinionBabysitter,updatedAt,proposition,isFinish } = req.body;
+     
+        if (!checkBody(req.body, ['token'])) {
+            res.json({ result: false, error: 'Champs manquants ou vides' });
+            return;
+     }
+     if (!token) {
+        return res.json({ result: false, error: 'Utilisateur inconnu' });
+  }
+    const existingUser = await User.findOne({token})
+    if (existingUser){
+        const avatar= existingUser.avatar
+        const newGarde = new Garde({
+            idUserParent,
+            avatar: avatar,
+            idUserBabysitter,
+            realStart,
+            realEnd,
+            ratingB,
+            ratinP,
+            opinionParent,
+            opinionBabysitter,
+            updatedAt,
+            proposition,
+            isFinish
+        })
+        newGarde.save()
+        res.json({result: true, newGarde})
+    }
+})
 
 
 

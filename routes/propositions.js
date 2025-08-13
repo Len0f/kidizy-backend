@@ -21,7 +21,7 @@ router.post('/',async (req,res)=>{
         const avatar= existingUser.avatar
         const newProposition = new Proposition({
             idUserParent,
-            avatar,
+            avatar: avatar,
             idUserBabysitter,
             firstName,
             lastName,

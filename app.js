@@ -10,6 +10,7 @@ var gardesRouter = require('./routes/gardes');
 var conversationRouter = require ('./routes/conversations')
 var messageRouter = require ('./routes/messages')
 
+
 var propositionRouter = require('./routes/propositions')
 
 var app = express();
@@ -35,6 +36,7 @@ app.use('/conversations',conversationRouter)
 
 app.use('/messages',messageRouter)
 app.use('/gardes', gardesRouter);
+
 app.use(require('express-fileupload')());
 
 module.exports = app;

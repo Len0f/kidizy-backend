@@ -8,8 +8,9 @@ idUserParent: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
 idUserBabysitter: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
 realStart: Date,
 realEnd: Date,
-rating: Number,
-createdAt: Date,
+ratingBabysitter: Number,
+ratingParent: Number,
+createdAt: {type: Date, required: true, default:()=> new Date()},
 proposion: { type: mongoose.Schema.Types.ObjectId, ref: 'propositions' }
 });
 
