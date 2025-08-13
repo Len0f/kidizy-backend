@@ -39,7 +39,8 @@ router.post('/', async (req, res) => {
 pusher.trigger('chat', 'message', req.body);
   const newMessage= new Message({
     idUser: req.body.idUser,
-    message: req.body.message
+    message: req.body.message,
+    conversationId: req.body.conversation
   })
   newMessage.save()
 

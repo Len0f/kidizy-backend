@@ -189,32 +189,32 @@ router.get('/id/:id', (req, res) => {
   });
 });
 
-
+// ---------------- UPLOAD DES FICHIERS
 router.post('/upload', async (req, res) => {
   try {
-    // 1) Garde-fous
+   
     if (!req.files || !req.files.photoFromFront) {
       return res.json({ result: false, error: 'Aucun fichier reçu (champ attendu: photoFromFront)' });
     }
 
-    const file = req.files.photoFromFront; // express-fileupload File
-    // Sécuriser l’extension à partir du mimetype (fallback .jpg)
+    const file = req.files.photoFromFront; 
+   
     const ext = (file.mimetype && file.mimetype.split('/')[1]) ? `.${file.mimetype.split('/')[1]}` : '.jpg';
 
-    // 2) Chemin temporaire local
+    
     const id = uniqid();
     const photoPath = path.join('./tmp', `${id}${ext}`);
 
-    // 3) Move local
+  
     await file.mv(photoPath);
 
-    // 4) Upload vers Cloudinary
+    
     const resultCloudinary = await cloudinary.uploader.upload(photoPath);
 
-    // 5) Nettoyage
+   
     try { fs.unlinkSync(photoPath); } catch (_) {}
 
-    // 6) Réponse
+  
     res.json({ result: true, url: resultCloudinary.secure_url });
   } catch (err) {
     console.error('UPLOAD ERROR:', err);
@@ -227,7 +227,7 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
-// -------------- RECUPERATION DES BABYSITTERS (avec filtres)
+// -------------- RECUPERATION DES BABYSITTERS 
 router.get('/babysitters', async (req, res) => {
   
   // On lit les filtres envoyé dans l'URL.
