@@ -4,6 +4,7 @@ var router = express.Router();
 
 require('../connection/connection');
 const User = require('../models/users');
+const Propositions = require('../models/propositions');
 
 
 
@@ -98,6 +99,115 @@ router.delete('/:token', async (req, res) => {
 
   res.json({ result: true, availability: user.babysitterInfos.availability });
 });
+
+
+router.post('/:id/rating', async (req, res) => {
+  try {
+    const { userId, rating, avis } = req.body; // userId = celui qui poste l'avis
+    const propositionId = req.params.id;
+
+if (!userId || !rating) {
+  return res.json({ result: false, error: 'userId et rating sont obligatoires' });
+}
+
+// Vérifie que la proposition existe
+const proposition = await Propositions.findById(propositionId);
+if (!proposition) {
+  return res.json({ result: false, error: 'Proposition introuvable' });
+}
+
+// Vérifie si l'user est bien lié à cette garde
+if (
+  proposition.idUserParent.toString() !== userId &&
+  proposition.idUserBabysitter.toString() !== userId
+) {
+  return res.json({ result: false, error: "Vous n'êtes pas lié à cette proposition" });
+}
+
+// Met à jour le champ approprié
+let updateFields = {};
+if (proposition.idUserParent.toString() === userId) {
+  updateFields.opinionParent = avis || '';
+} else {
+  updateFields.opinionBabysitter = avis || '';
+}
+
+// Enregistre la note dans la proposition
+updateFields.rating = rating;
+updateFields.updatedAt = new Date();
+
+const updated = await Propositions.findByIdAndUpdate(
+  propositionId,
+  { $set: updateFields },
+  { new: true }
+);
+
+// Met aussi à jour la note moyenne du destinataire
+let targetUserId =
+  proposition.idUserParent.toString() === userId
+    ? proposition.idUserBabysitter
+    : proposition.idUserParent;
+
+if (targetUserId) {
+  // Récupère toutes les notes reçues par cet utilisateur
+  const receivedRatings = await Propositions.find({
+    $or: [
+      { idUserParent: targetUserId, opinionBabysitter: { $ne: null } },
+      { idUserBabysitter: targetUserId, opinionParent: { $ne: null } }
+    ],
+    rating: { $gt: 0 }
+  });
+
+  const avgRating =
+    receivedRatings.reduce((sum, p) => sum + (p.rating || 0), 0) /
+    (receivedRatings.length || 1);
+
+  await User.findByIdAndUpdate(targetUserId, {
+    $set: { rating: avgRating }
+  });
+}
+
+res.json({ result: true, proposition: updated });
+  } catch (error) {
+    console.error(error);
+    res.json({ result: false, error: error.message });
+  }
+});
+
+// route pour créer une garde
+
+router.post('/gardes',async (req,res)=>{
+    const { token,idUserParent,idUserBabysitter,realStart,
+      realEnd,ratingB,ratinP,opinionParent,opinionBabysitter,updatedAt,proposition,isFinish } = req.body;
+
+        if (!checkBody(req.body, ['token'])) {
+            res.json({ result: false, error: 'Champs manquants ou vides' });
+            return;
+     }
+     if (!token) {
+        return res.json({ result: false, error: 'Utilisateur inconnu' });
+  }
+    const existingUser = await User.findOne({token})
+    if (existingUser){
+        const avatar= existingUser.avatar
+        const newGarde = new Garde({
+            idUserParent,
+            avatar: avatar,
+            idUserBabysitter,
+            realStart,
+            realEnd,
+            ratingB,
+            ratinP,
+            opinionParent,
+            opinionBabysitter,
+            updatedAt,
+            proposition,
+            isFinish
+        })
+        newGarde.save()
+        res.json({result: true, newGarde})
+    }
+})
 
 
 module.exports = router;
