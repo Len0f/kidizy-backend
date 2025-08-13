@@ -18,8 +18,10 @@ router.post('/',async (req,res)=>{
   }
     const existingUser = await User.findOne({token})
     if (existingUser){
+        const avatar= existingUser.avatar
         const newProposition = new Proposition({
             idUserParent,
+            avatar: avatar,
             idUserBabysitter,
             firstName,
             lastName,

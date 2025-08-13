@@ -14,29 +14,29 @@ const pusher = new Pusher({
 });
 
 // Join chat
-router.put('/:token', (req, res) => {
-  pusher.trigger('chat', 'join', {
-    token: req.params.token,
-  });
+// router.put('/:token', (req, res) => {
+//   pusher.trigger('chat', 'join', {
+//     token: req.params.token,
+//   });
 
-  res.json({ result: true });
-});
+//   res.json({ result: true });
+// });
 
-// Leave chat
-router.delete("/:token", (req, res) => {
-  pusher.trigger('chat', 'leave', {
-    token: req.params.token,
-  });
+// // Leave chat
+// router.delete("/:token", (req, res) => {
+//   pusher.trigger('chat', 'leave', {
+//     token: req.params.token,
+//   });
 
-  res.json({ result: true });
-});
+//   res.json({ result: true });
+// });
 
 // Send message
 router.post('/', async (req, res) => {
     if (!checkBody(req.body,['message'])){
         return res.json('Message field empty')
     }
-pusher.trigger('chat', 'message', req.body);
+pusher.trigger(`chat.${req.body.conversation}`, 'message', req.body);
   const newMessage= new Message({
     idUser: req.body.idUser,
     message: req.body.message,
@@ -49,14 +49,14 @@ pusher.trigger('chat', 'message', req.body);
 });
 
 router.get('/',async (req,res)=>{
-    if(!checkBody(req.query,['token','conversation'])){
-        return res.json('token absent')
-    }
+    // if(!checkBody(req.query,['token','conversation'])){
+    //     return res.json('token absent')
+    // }
     const existingUser = await User.findOne({token: req.query.token})
     if (!existingUser){
         return res.json('User not found')
     }
-    const messagesUser = await Message.find({conversationId: req.query.conversation}).select('createdAt message updatedAt idUser')
+    const messagesUser = await Message.find({conversationId: req.query.conversationId}).select('createdAt message updatedAt idUser')
     res.json({messagesUser})
 })
 
