@@ -16,6 +16,10 @@ router.post('/',async (req,res)=>{
      if (!token) {
         return res.json({ result: false, error: 'Utilisateur inconnu' });
   }
+  const existingConv= await Conversation.findOne({idUserBabysitter,idUserParent})
+  if(existingConv){
+    return res.json('Conversation déjà existante')
+  }
   const existingUser = await User.findOne({token})
     if (existingUser){
         const newConversation = new Conversation({
