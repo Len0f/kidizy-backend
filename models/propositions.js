@@ -4,6 +4,7 @@ const propositionsSchema = mongoose.Schema({
 idUserParent: { type: mongoose.Schema.Types.ObjectId, ref: 'users', required: true },
 idUserBabysitter: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
 propoStart: String,
+avatar: String,
 propoEnd: String,
 day:String,
 kids:Number,
