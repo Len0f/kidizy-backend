@@ -6,6 +6,7 @@ const Proposition = require('../models/propositions')
 const { checkBody } = require('../modules/checkBody');
 
 router.post('/',async (req,res)=>{
+
     const {
         token,
         idUserParent,
@@ -29,6 +30,32 @@ router.post('/',async (req,res)=>{
         return res.json({
             result: false, error: 'Champs manquants ou vides'
         });
+
+    if (!token) {
+        return res.json({ result: false, error: 'Utilisateur inconnu' });
+  }
+    const existingUser = await User.findOne({token})
+    if (existingUser){
+        const avatar= existingUser.avatar
+        const newProposition = new Proposition({
+            idUserParent,
+            avatar: avatar,
+            idUserBabysitter,
+            firstName,
+            lastName,
+            propoStart,
+            kids,
+            propoEnd,
+            day,
+            rating,
+            comment,
+            opinionParent,
+            opinionBabysitter,
+            isAccepted,
+            updatedAt
+        })
+        newProposition.save()
+        res.json({result: true, newProposition})
     }
 
     if (!token) {
