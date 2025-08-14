@@ -6,9 +6,11 @@ var Garde = require('../models/babysits')
 require('../connection/connection');
 const User = require('../models/users');
 const Propositions = require('../models/propositions');
+const Babysits = require('../models/babysits');
+const { checkBody } = require('../modules/checkBody');
 
 
-router.post('/gardes',async (req,res)=>{
+router.post('/',async (req,res)=>{
     const { token,idUserParent,idUserBabysitter,realStart,
       realEnd,ratingB,ratinP,opinionParent,opinionBabysitter,updatedAt,proposition,isFinish } = req.body;
      
@@ -26,7 +28,9 @@ router.post('/gardes',async (req,res)=>{
             idUserParent,
             avatar: avatar,
             idUserBabysitter,
-            realStart,
+            // Si on veut la date au bon format
+            //realStart: new Date(`${year}-${month}-${day}T${hour}:${minute}:00Z`),
+            realStart, // J'ai laissé pour éviter de me faire gronder.
             realEnd,
             ratingB,
             ratinP,
@@ -241,6 +245,25 @@ router.post('/gardes',async (req,res)=>{
         res.json({result: true, newGarde})
     }
 })
+
+// route pour recuperer les gardes de l'utilisateur 
+router.get("/new/id", async (req, res) => {
+  const { token, id } = req.query;
+
+  if (!checkBody(req.query, ["token", "id"])) {
+    res.json({ result: false, error: "Champs manquants ou vides" });
+    return;
+  }
+  if (!token || !id) {
+    return res.json({ result: false, error: "Utilisateur inconnu" });
+  }
+  const garde = await Garde.find({$or:[{idUserParent: id},{idUserBabysitter:id}]}).populate('idUserParent idUserBabysitter proposition','-password -token');
+  res.json({ result: true, garde });
+});
+
+
+// Récupérer la prochaine garde à venir
+
 
 
 module.exports = router;
