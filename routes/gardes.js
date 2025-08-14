@@ -213,7 +213,7 @@ res.json({ result: true, proposition: updated });
 
 // route pour créer une garde
 
-router.post('/gardes',async (req,res)=>{
+router.post('/',async (req,res)=>{
     const { token,idUserParent,idUserBabysitter,realStart,
       realEnd,ratingB,ratinP,opinionParent,opinionBabysitter,updatedAt,proposition,isFinish } = req.body;
 
@@ -260,10 +260,5 @@ router.get("/new/id", async (req, res) => {
   const garde = await Garde.find({$or:[{idUserParent: id},{idUserBabysitter:id}]}).populate('idUserParent idUserBabysitter proposition','-password -token');
   res.json({ result: true, garde });
 });
-
-
-// Récupérer la prochaine garde à venir
-
-
 
 module.exports = router;
