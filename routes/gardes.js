@@ -8,6 +8,7 @@ const User = require('../models/users');
 const Propositions = require('../models/propositions');
 
 
+
 router.post('/gardes',async (req,res)=>{
     const { token,idUserParent,idUserBabysitter,realStart,
       realEnd,ratingB,ratinP,opinionParent,opinionBabysitter,updatedAt,proposition,isFinish } = req.body;
@@ -209,7 +210,7 @@ res.json({ result: true, proposition: updated });
 
 // route pour créer une garde
 
-router.post('/gardes',async (req,res)=>{
+router.post('/',async (req,res)=>{
     const { token,idUserParent,idUserBabysitter,realStart,
       realEnd,ratingB,ratinP,opinionParent,opinionBabysitter,updatedAt,proposition,isFinish } = req.body;
 
@@ -242,5 +243,18 @@ router.post('/gardes',async (req,res)=>{
     }
 })
 
+router.get("/id", async (req, res) => {
+  const { token, id } = req.query;
+
+  if (!checkBody(req.query, ["token", "id"])) {
+    res.json({ result: false, error: "Champs manquants ou vides" });
+    return;
+  }
+  if (!token || !id) {
+    return res.json({ result: false, error: "Utilisateur inconnu" });
+  }
+  const garde = await Garde.findById(id);
+  res.json({ result: true, garde });
+});
 
 module.exports = router;
