@@ -9,7 +9,7 @@ const Propositions = require('../models/propositions');
 
 
 
-router.post('/new/id',async (req,res)=>{
+router.post('/new',async (req,res)=>{
     const { token,idUserParent,idUserBabysitter,realStart,
       realEnd,ratingB,ratinP,opinionParent,opinionBabysitter,updatedAt,proposition,isFinish } = req.body;
      
