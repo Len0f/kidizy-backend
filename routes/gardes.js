@@ -1,17 +1,17 @@
 var express = require('express');
 var router = express.Router();
 var Garde = require('../models/babysits')
-
+const { checkBody } = require('../modules/checkBody');
 
 require('../connection/connection');
 const User = require('../models/users');
 const Propositions = require('../models/propositions');
 const Babysits = require('../models/babysits');
-const { checkBody } = require('../modules/checkBody');
 const mongoose = require('mongoose');
 
 
-router.post('/',async (req,res)=>{
+
+router.post('/new',async (req,res)=>{
     const { token,idUserParent,idUserBabysitter,realStart,
       realEnd,ratingB,ratinP,opinionParent,opinionBabysitter,updatedAt,proposition,isFinish } = req.body;
      
