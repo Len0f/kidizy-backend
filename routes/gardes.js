@@ -138,74 +138,146 @@ router.delete('/:token', async (req, res) => {
   res.json({ result: true, availability: user.babysitterInfos.availability });
 });
 
+// route pour créer une garde
+
+router.post('/',async (req,res)=>{
+    const { token,idUserParent,idUserBabysitter,realStart,
+      realEnd,ratingB,ratinP,opinionParent,opinionBabysitter,updatedAt,proposition,isFinish } = req.body;
+
+        if (!checkBody(req.body, ['token'])) {
+            res.json({ result: false, error: 'Champs manquants ou vides' });
+            return;
+     }
+     if (!token) {
+        return res.json({ result: false, error: 'Utilisateur inconnu' });
+  }
+    const existingUser = await User.findOne({token})
+    if (existingUser){
+        const avatar= existingUser.avatar
+        const newGarde = new Garde({
+            idUserParent,
+            avatar: avatar,
+            idUserBabysitter,
+            realStart,
+            realEnd,
+            ratingB,
+            ratinP,
+            opinionParent,
+            opinionBabysitter,
+            updatedAt,
+            proposition,
+            isFinish
+        })
+        newGarde.save()
+        res.json({result: true, newGarde})
+    }
+})
+
+router.get("/id", async (req, res) => {
+  const { token, id } = req.query;
+
+  if (!checkBody(req.query, ["token", "id"])) {
+    res.json({ result: false, error: "Champs manquants ou vides" });
+    return;
+  }
+  if (!token || !id) {
+    return res.json({ result: false, error: "Utilisateur inconnu" });
+  }
+  const garde = await Garde.findById(id);
+  res.json({ result: true, garde });
+});
 
 router.post('/:id/rating', async (req, res) => {
   try {
-    const { userId, rating, avis } = req.body; // userId = celui qui poste l'avis
-    const propositionId = req.params.id;
+    const { userId, rating, avis, idUserBabysitter, idUserParent } = req.body; // userId = celui qui poste l'avis
+    const gardeId = req.params.id;
 
 if (!userId || !rating) {
   return res.json({ result: false, error: 'userId et rating sont obligatoires' });
 }
 
-// Vérifie que la proposition existe
-const proposition = await Propositions.findById(propositionId);
-if (!proposition) {
-  return res.json({ result: false, error: 'Proposition introuvable' });
+  // Vérifie que la proposition existe
+const garde = await Garde.findById(gardeId);
+if (!garde) {
+  return res.json({ result: false, error: 'Garde introuvable' });
 }
 
-// Vérifie si l'user est bien lié à cette garde
+  // Vérifie si l'user est bien lié à cette garde
 if (
-  proposition.idUserParent.toString() !== userId &&
-  proposition.idUserBabysitter.toString() !== userId
+  garde.idUserParent.toString() !== userId &&
+  garde.idUserBabysitter.toString() !== userId
 ) {
   return res.json({ result: false, error: "Vous n'êtes pas lié à cette proposition" });
 }
 
-// Met à jour le champ approprié
+  // Met à jour le champ approprié et Enregistre la note dans la proposition
 let updateFields = {};
-if (proposition.idUserParent.toString() === userId) {
+if (garde.idUserParent.toString() === userId) {
   updateFields.opinionParent = avis || '';
+  updateFields.ratingP = rating;
+  updateFields.isFinish ='FINISH';
 } else {
+  updateFields.ratingB = rating;
   updateFields.opinionBabysitter = avis || '';
+  updateFields.isFinish ='FINISH';
 }
 
-// Enregistre la note dans la proposition
-updateFields.rating = rating;
 updateFields.updatedAt = new Date();
 
-const updated = await Propositions.findByIdAndUpdate(
-  propositionId,
+const updated = await Garde.findByIdAndUpdate(
+  gardeId,
   { $set: updateFields },
   { new: true }
 );
 
-// Met aussi à jour la note moyenne du destinataire
+  // Met aussi à jour la note moyenne du destinataire
 let targetUserId =
-  proposition.idUserParent.toString() === userId
-    ? proposition.idUserBabysitter
-    : proposition.idUserParent;
+  garde.idUserParent.toString() === userId
+    ? idUserBabysitter
+    : idUserParent;
+console.log(idUserBabysitter)
+console.log(userId)
+console.log(targetUserId)
+if (userId) {
+      // Récupère toutes les notes reçues par cet utilisateur
 
-if (targetUserId) {
-  // Récupère toutes les notes reçues par cet utilisateur
-  const receivedRatings = await Propositions.find({
-    $or: [
-      { idUserParent: targetUserId, opinionBabysitter: { $ne: null } },
-      { idUserBabysitter: targetUserId, opinionParent: { $ne: null } }
-    ],
-    rating: { $gt: 0 }
-  });
+  let receivedRatings;
+  if(garde.idUserParent.toString() === userId) {
+    receivedRatings = await Garde.find({
+      $or: [
+        { idUserParent: targetUserId, opinionBabysitter: { $ne: null } },
+        { idUserBabysitter: targetUserId, opinionParent: { $ne: null } }
+      ],
+      ratingB: { $gt: 0 }
+    });
+  } else {
+    receivedRatings = await Garde.find({
+      $or: [
+        { idUserParent: targetUserId, opinionBabysitter: { $ne: null } },
+        { idUserBabysitter: targetUserId, opinionParent: { $ne: null } }
+      ],
+      ratingP: { $gt: 0 }
+    });
+  }
 
-  const avgRating =
-    receivedRatings.reduce((sum, p) => sum + (p.rating || 0), 0) /
+
+  let avgRating;
+  if (garde.idUserParent.toString() === userId) {
+    avgRating =
+    receivedRatings.reduce((sum, p) => sum + (p.ratingP || 0), 0) /
     (receivedRatings.length || 1);
-
+  } else {
+    avgRating =
+    receivedRatings.reduce((sum, p) => sum + (p.ratingB || 0), 0) /
+    (receivedRatings.length || 1);
+  }
+  console.log(avgRating)
   await User.findByIdAndUpdate(targetUserId, {
     $set: { rating: avgRating }
   });
 }
 
-res.json({ result: true, proposition: updated });
+res.json({ result: true, garde: updated });
   } catch (error) {
     console.error(error);
     res.json({ result: false, error: error.message });
@@ -294,7 +366,6 @@ router.get('/next/by-token', async (req, res) => {
     res.json({ result: false, error: 'Erreur serveur' });
   }
 });
-
 
 
 module.exports = router;
