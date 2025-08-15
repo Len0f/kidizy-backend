@@ -1,4 +1,4 @@
-var express = require("express");
+var express = require('express');
 var router = express.Router();
 
 require("../connection/connection");
@@ -94,7 +94,7 @@ router.get("/id", async (req, res) => {
   if (!token || !id) {
     return res.json({ result: false, error: "Utilisateur inconnu" });
   }
-  const propo = await Proposition.findById(id);
+  const propo = await Proposition.findById(id).populate('idUserParent','location');
   res.json({ result: true, propo });
 });
 

@@ -180,7 +180,7 @@ router.get('/me/:token', (req, res) => {
 // ---------------- RECUPERER L'UTILISATEUR PAR ID
 router.get('/id/:id', (req, res) => {
 
-  User.findById({ _id: req.params.id }).select('avatar firstName location bio interest avis rating babysitterInfos.price babysitterInfos.age').then(data => {
+  User.findById({ _id: req.params.id }).select('avatar firstName location babysitterInfos.bio babysitterInfos.interest avis rating babysitterInfos.price babysitterInfos.age').then(data => {
     if (data) {
       res.json({ result: true, user: data });
     } else {

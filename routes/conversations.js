@@ -53,4 +53,18 @@ router.get('/',async (req,res)=>{
   }
 })
 
+router.get('/id',async (req,res)=>{
+    const { token, id,} = req.query;
+
+        if (!checkBody(req.query, ['token','id'])) {
+            res.json({ result: false, error: 'Champs manquants ou vides' });
+            return;
+     }
+     if (!token || !id) {
+        return res.json({ result: false, error: 'Utilisateur inconnu' });
+  }
+    const conversationInfo=await Conversation.findById(id).populate('idUserParent idUserBabysitter','firstName lastName avatar')
+    res.json({result:true, conversationInfo})
+})
+
 module.exports = router;
