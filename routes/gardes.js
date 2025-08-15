@@ -173,8 +173,7 @@ router.post('/',async (req,res)=>{
     }
 })
 
-// route pour recuperer les gardes de l'utilisateur 
-router.get("/new/id", async (req, res) => {
+router.get("/id", async (req, res) => {
   const { token, id } = req.query;
 
   if (!checkBody(req.query, ["token", "id"])) {
@@ -184,7 +183,7 @@ router.get("/new/id", async (req, res) => {
   if (!token || !id) {
     return res.json({ result: false, error: "Utilisateur inconnu" });
   }
-  const garde = await Garde.find({$or:[{idUserParent: id},{idUserBabysitter:id}]}).populate('idUserParent idUserBabysitter proposition','-password -token');
+  const garde = await Garde.findById(id);
   res.json({ result: true, garde });
 });
 
@@ -285,6 +284,42 @@ res.json({ result: true, garde: updated });
   }
 });
 
+// route pour créer une garde
+
+router.post('/',async (req,res)=>{
+    const { token,idUserParent,idUserBabysitter,realStart,
+      realEnd,ratingB,ratinP,opinionParent,opinionBabysitter,updatedAt,proposition,isFinish } = req.body;
+
+        if (!checkBody(req.body, ['token'])) {
+            res.json({ result: false, error: 'Champs manquants ou vides' });
+            return;
+     }
+     if (!token) {
+        return res.json({ result: false, error: 'Utilisateur inconnu' });
+  }
+    const existingUser = await User.findOne({token})
+    if (existingUser){
+        const avatar= existingUser.avatar
+        const newGarde = new Garde({
+            idUserParent,
+            avatar: avatar,
+            idUserBabysitter,
+            realStart,
+            realEnd,
+            ratingB,
+            ratinP,
+            opinionParent,
+            opinionBabysitter,
+            updatedAt,
+            proposition,
+            isFinish
+        })
+        newGarde.save()
+        res.json({result: true, newGarde})
+    }
+})
+
+// route pour recuperer les gardes de l'utilisateur 
 router.get("/new/id", async (req, res) => {
   const { token, id } = req.query;
 
@@ -298,6 +333,7 @@ router.get("/new/id", async (req, res) => {
   const garde = await Garde.find({$or:[{idUserParent: id},{idUserBabysitter:id}]}).populate('idUserParent idUserBabysitter proposition','-password -token');
   res.json({ result: true, garde });
 });
+
 
 // /babysits/next/by-token  -> prochaine garde basée sur proposition.day
 router.get('/next/by-token', async (req, res) => {
