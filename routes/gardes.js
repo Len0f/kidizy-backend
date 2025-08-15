@@ -6,6 +6,8 @@ const { checkBody } = require('../modules/checkBody');
 require('../connection/connection');
 const User = require('../models/users');
 const Propositions = require('../models/propositions');
+const Babysits = require('../models/babysits');
+const mongoose = require('mongoose');
 
 
 
@@ -27,7 +29,9 @@ router.post('/new',async (req,res)=>{
             idUserParent,
             avatar: avatar,
             idUserBabysitter,
-            realStart,
+            // Si on veut la date au bon format
+            //realStart: new Date(`${year}-${month}-${day}T${hour}:${minute}:00Z`),
+            realStart, // J'ai laissé pour éviter de me faire gronder.
             realEnd,
             ratingB,
             ratinP,
@@ -169,7 +173,8 @@ router.post('/',async (req,res)=>{
     }
 })
 
-router.get("/id", async (req, res) => {
+// route pour recuperer les gardes de l'utilisateur 
+router.get("/new/id", async (req, res) => {
   const { token, id } = req.query;
 
   if (!checkBody(req.query, ["token", "id"])) {
@@ -179,7 +184,7 @@ router.get("/id", async (req, res) => {
   if (!token || !id) {
     return res.json({ result: false, error: "Utilisateur inconnu" });
   }
-  const garde = await Garde.findById(id);
+  const garde = await Garde.find({$or:[{idUserParent: id},{idUserBabysitter:id}]}).populate('idUserParent idUserBabysitter proposition','-password -token');
   res.json({ result: true, garde });
 });
 
@@ -294,6 +299,37 @@ router.get("/new/id", async (req, res) => {
   res.json({ result: true, garde });
 });
 
+// /babysits/next/by-token  -> prochaine garde basée sur proposition.day
+router.get('/next/by-token', async (req, res) => {
+  try {
+    const { token, userId, profil } = req.query;
+    // on ne chipote pas : si profil pas fourni, on suppose babysitter
+    const role = (profil || 'babysitter').toLowerCase();
+
+    // filtre simple par rôle
+    const query = role === 'parent'
+      ? { idUserParent: userId }
+      : { idUserBabysitter: userId };
+
+    // on populate TOUT, sans "match" compliqué
+    const docs = await Babysits.find(query)
+      .populate('idUserParent')
+      .populate('idUserBabysitter')
+      .populate('proposition'); // contient day, propoStart, etc.
+
+    const now = new Date();
+
+    // on garde uniquement les propositions à venir et on trie par date
+    const next = docs
+      .filter(b => b?.proposition?.day && new Date(b.proposition.day) > now)
+      .sort((a, b) => new Date(a.proposition.day) - new Date(b.proposition.day))[0] || null;
+
+    res.json({ result: true, babysit: next });
+  } catch (e) {
+    console.error(e);
+    res.json({ result: false, error: 'Erreur serveur' });
+  }
+});
 
 
 module.exports = router;
