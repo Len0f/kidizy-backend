@@ -1,8 +1,9 @@
+// ----------------- VERIFICATION DES VALEURS DANS LE BODY
 function checkBody(body, keys) {
   let isValid = true;
 
   for (const field of keys) {
-    if (!body[field] || body[field] === '') {
+    if (!body[field] || body[field] === "") {
       isValid = false;
     }
   }

@@ -1,49 +1,57 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const parentInfosSchema =mongoose.Schema({
-    kids: [{firstName:String, age:String}],
-    subscription: Boolean
-})
-
-
-const babysitterInfosSchema =mongoose.Schema({
-    CNI: String,
-    criminalRecord: String,
-    age: String,
-    price: Number,
-    bio: String,
-    availability: [{
-        day:String,
-        startHour: String,
-        endHour: String
-    }],
-    interest: String,
-    isDocOk: {type :Boolean, required: true, default: false},
-    situation: String,
-    jackpot: {type: Number, required: true, default: 0}
-})
-
-const usersSchema = mongoose.Schema({
-	token: String,
-    email: String,
-    count:Number,
-    password: String,
-    lastName: String,
-    firstName:String,
-    phone:String,
-    location: {lat: String, lon: String, address:String},
-    avatar: String,
-    createdAt : Date,
-    updatedAt: Date,
-    rating: {type: Number, required:true, default:1},
-    conversations: { type: mongoose.Schema.Types.ObjectId, ref: 'conversations' },
-    isValidated: Boolean,
-    parentInfos: parentInfosSchema,
-    babysitterInfos: babysitterInfosSchema,
-    role: {type:String, enum: ['PARENT','BABYSITTER','PENDING'], required: true,default: 'PENDING' }
+// ----------------- SCHEMA DU SOUS-DOCUMENT DES INFOS PARENTS
+const parentInfosSchema = mongoose.Schema({
+  kids: [{ firstName: String, age: String }],
+  subscription: Boolean,
 });
 
+// ----------------- SCHEMA DU SOUS-DOCUMENT DES INFOS BABYSITTEURS
+const babysitterInfosSchema = mongoose.Schema({
+  CNI: String,
+  criminalRecord: String,
+  age: String,
+  price: Number,
+  bio: String,
+  availability: [
+    {
+      day: String,
+      startHour: String,
+      endHour: String,
+    },
+  ],
+  interest: String,
+  isDocOk: { type: Boolean, required: true, default: false },
+  situation: String,
+  jackpot: { type: Number, required: true, default: 0 },
+});
 
-const Users = mongoose.model('users', usersSchema);
+// ----------------- SCHEMA DES INFOS DE L'UTILISATEUR
+const usersSchema = mongoose.Schema({
+  token: String,
+  email: String,
+  count: Number,
+  password: String,
+  lastName: String,
+  firstName: String,
+  phone: String,
+  location: { lat: String, lon: String, address: String },
+  avatar: String,
+  createdAt: Date,
+  updatedAt: Date,
+  rating: { type: Number, required: true, default: 1 },
+  conversations: { type: mongoose.Schema.Types.ObjectId, ref: "conversations" },
+  isValidated: Boolean,
+  parentInfos: parentInfosSchema,
+  babysitterInfos: babysitterInfosSchema,
+  role: {
+    type: String,
+    enum: ["PARENT", "BABYSITTER", "PENDING"],
+    required: true,
+    default: "PENDING",
+  },
+});
+
+const Users = mongoose.model("users", usersSchema);
 
 module.exports = Users;
