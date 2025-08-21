@@ -462,7 +462,7 @@ router.get("/babysitters", async (req, res) => {
   res.json({
     result: true,
     babysitters: items,
-    total: items.length, // MODIF: plus de nextOffset/hasMore
+    total: items.length,
   });
 });
 
